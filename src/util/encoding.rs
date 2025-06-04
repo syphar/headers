@@ -1,7 +1,7 @@
 use std::fmt;
 use std::str;
 
-pub use self::Encoding::{Chunked, Brotli, Gzip, Deflate, Compress, Identity, EncodingExt, Trailers};
+pub use self::Encoding::{Brotli, Chunked, Compress, Deflate, Ext, Gzip, Identity, Trailers};
 
 /// A value to represent an encoding used in `Transfer-Encoding`
 /// or `Accept-Encoding` header.
@@ -22,7 +22,7 @@ pub enum Encoding {
     /// The `trailers` encoding.
     Trailers,
     /// Some other encoding that is less common, can be any String.
-    EncodingExt(String)
+    Ext(String),
 }
 
 impl fmt::Display for Encoding {
@@ -35,14 +35,14 @@ impl fmt::Display for Encoding {
             Compress => "compress",
             Identity => "identity",
             Trailers => "trailers",
-            EncodingExt(ref s) => s.as_ref()
+            Ext(ref s) => s.as_ref(),
         })
     }
 }
 
 impl str::FromStr for Encoding {
-    type Err = ::Error;
-    fn from_str(s: &str) -> ::Result<Encoding> {
+    type Err = crate::Error;
+    fn from_str(s: &str) -> Result<Encoding, crate::Error> {
         match s {
             "chunked" => Ok(Chunked),
             "br" => Ok(Brotli),
@@ -51,7 +51,7 @@ impl str::FromStr for Encoding {
             "compress" => Ok(Compress),
             "identity" => Ok(Identity),
             "trailers" => Ok(Trailers),
-            _ => Ok(EncodingExt(s.to_owned()))
+            _ => Ok(Ext(s.to_owned())),
         }
     }
 }
