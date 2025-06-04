@@ -3,14 +3,14 @@ use http::HeaderValue;
 use crate::Error;
 
 //pub use self::charset::Charset;
-pub use self::encoding::Encoding;
+// pub use self::encoding::Encoding;
 pub(crate) use self::entity::{EntityTag, EntityTagRange};
 pub(crate) use self::flat_csv::{FlatCsv, SemiColon};
 pub(crate) use self::fmt::fmt;
 pub(crate) use self::http_date::HttpDate;
 pub(crate) use self::iter::IterExt;
 //pub use language_tags::LanguageTag;
-pub use self::quality_value::QualityValue;
+// pub use self::quality_value::QualityValue;
 pub(crate) use self::seconds::Seconds;
 pub(crate) use self::value_string::HeaderValueString;
 
