@@ -52,6 +52,11 @@ impl Cookie {
         self.iter().count()
     }
 
+    /// Check if this `Cookie` header is empty.
+    pub fn is_empty(&self) -> bool {
+        self.iter().next().is_none()
+    }
+
     /// Iterator the key-value pairs of this `Cookie` header.
     pub fn iter(&self) -> impl Iterator<Item = (&str, &str)> {
         self.0.iter().filter_map(|kv| {
