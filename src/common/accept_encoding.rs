@@ -160,14 +160,24 @@ mod tests {
 
     #[test]
     fn from_iter() {
+        let allow: AcceptEncoding = vec![Encoding::Gzip.into(), Encoding::Deflate.into()]
+            .into_iter()
+            .collect();
+
+        let headers = test_encode(allow);
+        assert_eq!(headers["accept-encoding"], "gzip, deflate");
+    }
+
+    #[test]
+    fn from_iter_with_q() {
         let allow: AcceptEncoding = vec![
-            QualityValue::new(Encoding::Gzip, 1.0.try_into().unwrap()),
-            QualityValue::new(Encoding::Deflate, 1.0.try_into().unwrap()),
+            Encoding::Gzip.into(),
+            QualityValue::from(Encoding::Deflate).with_q(0.5),
         ]
         .into_iter()
         .collect();
 
         let headers = test_encode(allow);
-        assert_eq!(headers["accept-encoding"], "gzip, deflate");
+        assert_eq!(headers["accept-encoding"], "gzip, deflate; q=0.5");
     }
 }
