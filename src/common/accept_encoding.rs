@@ -1,4 +1,4 @@
-use std::iter::FromIterator;
+use std::{cmp::Ordering, iter::FromIterator};
 
 use http::HeaderValue;
 
@@ -70,8 +70,10 @@ derive_header! {
 impl AcceptEncoding {
     /// Returns an iterator over `QualityValue<Encoding>`s contained within, ordered by priority.
     pub fn iter(&self) -> impl Iterator<Item = QualityValue<Encoding>> + '_ {
-        let values: Vec<_> = self.0.iter().filter_map(|s| s.parse().ok()).collect();
-        // values.sort();
+        let mut values: Vec<_> = self.0.iter().filter_map(|s| s.parse().ok()).collect();
+        values.sort_by(|a: &QualityValue<Encoding>, b: &QualityValue<Encoding>| {
+            a.partial_cmp(b).unwrap_or(Ordering::Equal)
+        });
         values.into_iter()
     }
 
