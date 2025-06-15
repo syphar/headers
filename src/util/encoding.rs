@@ -1,14 +1,13 @@
+use std::borrow::Cow;
 use std::fmt;
 use std::str;
 
-pub use self::Encoding::{Brotli, Chunked, Compress, Deflate, Ext, Gzip, Identity, Star, Trailers};
+pub use self::Encoding::{Brotli, Chunked, Compress, Deflate, Ext, Gzip, Identity, Trailers};
 
 /// A value to represent an encoding used in `Transfer-Encoding`
 /// or `Accept-Encoding` header.
 #[derive(Clone, PartialEq, Debug)]
 pub enum Encoding {
-    /// The `*` (= all) encoding.
-    Star,
     /// The `chunked` encoding.
     Chunked,
     /// The `br` encoding.
@@ -24,14 +23,13 @@ pub enum Encoding {
     /// The `trailers` encoding.
     Trailers,
     /// Some other encoding that is less common, can be any String.
-    Ext(String),
+    Ext(Cow<'static, str>),
 }
 
 impl fmt::Display for Encoding {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.write_str(match *self {
             Chunked => "chunked",
-            Star => "*",
             Brotli => "br",
             Gzip => "gzip",
             Deflate => "deflate",
@@ -47,7 +45,6 @@ impl str::FromStr for Encoding {
     type Err = crate::Error;
     fn from_str(s: &str) -> Result<Encoding, crate::Error> {
         match s {
-            "*" => Ok(Star),
             "chunked" => Ok(Chunked),
             "br" => Ok(Brotli),
             "deflate" => Ok(Deflate),
@@ -55,7 +52,7 @@ impl str::FromStr for Encoding {
             "compress" => Ok(Compress),
             "identity" => Ok(Identity),
             "trailers" => Ok(Trailers),
-            _ => Ok(Ext(s.to_owned())),
+            _ => Ok(Ext(Cow::Owned(s.to_owned()))),
         }
     }
 }

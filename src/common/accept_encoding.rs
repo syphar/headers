@@ -1,8 +1,10 @@
-use std::{cmp::Ordering, iter::FromIterator};
+use std::{borrow::Cow, cmp::Ordering, iter::FromIterator};
 
 use http::HeaderValue;
 
 use crate::util::{Encoding, FlatCsv, QualityValue};
+
+const STAR: Encoding = Encoding::Ext(Cow::Borrowed("*"));
 
 /// `Accept-Encoding` header, defined in
 /// [RFC7231](https://datatracker.ietf.org/doc/html/rfc7231#section-5.3.4)
@@ -84,7 +86,7 @@ impl AcceptEncoding {
 
     /// returns if a certain encoding is accepted.
     pub fn accepts(&self, encoding: &Encoding) -> bool {
-        self.iter_encodings().any(|e| &e == encoding)
+        self.iter_encodings().any(|e| e == STAR || &e == encoding)
     }
 }
 
@@ -122,7 +124,10 @@ impl FromIterator<QualityValue<Encoding>> for AcceptEncoding {
 
 #[cfg(test)]
 mod tests {
-    use super::{super::test_decode, *};
+    use super::{
+        super::{test_decode, test_encode},
+        *,
+    };
     use std::convert::TryInto;
 
     #[test]
@@ -146,15 +151,23 @@ mod tests {
         let as_vec = dbg!(allowed.iter().collect::<Vec<_>>());
         assert_eq!(
             as_vec,
-            vec![QualityValue::new(Encoding::Star, 1.0.try_into().unwrap()),]
+            vec![QualityValue::new(
+                Encoding::Ext("*".into()),
+                1.0.try_into().unwrap()
+            ),]
         );
     }
 
-    // #[test]
-    // fn from_iter() {
-    //     let allow: AccessControlAllowMethods = vec![Method::GET, Method::PUT].into_iter().collect();
+    #[test]
+    fn from_iter() {
+        let allow: AcceptEncoding = vec![
+            QualityValue::new(Encoding::Gzip, 1.0.try_into().unwrap()),
+            QualityValue::new(Encoding::Deflate, 1.0.try_into().unwrap()),
+        ]
+        .into_iter()
+        .collect();
 
-    //     let headers = test_encode(allow);
-    //     assert_eq!(headers["access-control-allow-methods"], "GET, PUT");
-    // }
+        let headers = test_encode(allow);
+        assert_eq!(headers["accept-encoding"], "gzip, deflate");
+    }
 }
