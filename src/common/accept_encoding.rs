@@ -145,6 +145,20 @@ mod tests {
     }
 
     #[test]
+    fn iter_sorted() {
+        let allowed = test_decode::<AcceptEncoding>(&["compress, gzip; q=0.5"]).unwrap();
+
+        let as_vec = allowed.iter().collect::<Vec<_>>();
+        assert_eq!(
+            as_vec,
+            vec![
+                QualityValue::new(Encoding::Gzip, 0.5.try_into().unwrap()),
+                QualityValue::new(Encoding::Compress, 1.0.try_into().unwrap()),
+            ]
+        );
+    }
+
+    #[test]
     fn star() {
         let allowed = test_decode::<AcceptEncoding>(&["*"]).unwrap();
 
