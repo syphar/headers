@@ -1,3 +1,7 @@
+use std::iter::FromIterator;
+
+use http::HeaderValue;
+
 use crate::util::{Encoding, FlatCsv, QualityValue};
 
 /// `Accept-Encoding` header, defined in
@@ -66,36 +70,34 @@ derive_header! {
 impl AcceptEncoding {
     /// Returns an iterator over `QualityValue<Encoding>`s contained within, ordered by priority.
     pub fn iter(&self) -> impl Iterator<Item = QualityValue<Encoding>> + '_ {
+        // FIXME: sort by priority / quality
         self.0.iter().filter_map(|s| s.parse().ok())
     }
 
     /// Returns an iterator just over `Encoding`s contained within, ordered by priority.
     pub fn iter_encodings(&self) -> impl Iterator<Item = Encoding> + '_ {
-        self.0
-            .iter()
-            .filter_map(|s| s.parse().ok())
-            .map(|qv: QualityValue<Encoding>| qv.value)
+        self.iter().map(|qv: QualityValue<Encoding>| qv.value)
     }
 }
 
-// impl FromIterator<Method> for AccessControlAllowMethods {
-//     fn from_iter<I>(iter: I) -> Self
-//     where
-//         I: IntoIterator<Item = Method>,
-//     {
-//         let methods = iter
-//             .into_iter()
-//             .map(|method| {
-//                 method
-//                     .as_str()
-//                     .parse::<HeaderValue>()
-//                     .expect("Method is a valid HeaderValue")
-//             })
-//             .collect();
+impl FromIterator<QualityValue<Encoding>> for AcceptEncoding {
+    fn from_iter<I>(iter: I) -> Self
+    where
+        I: IntoIterator<Item = QualityValue<Encoding>>,
+    {
+        let methods = iter
+            .into_iter()
+            .map(|method| {
+                method
+                    .to_string()
+                    .parse::<HeaderValue>()
+                    .expect("Method is a valid HeaderValue")
+            })
+            .collect();
 
-//         AccessControlAllowMethods(methods)
-//     }
-// }
+        AcceptEncoding(methods)
+    }
+}
 
 // (AcceptEncoding, ACCEPT_ENCODING) => (QualityItem<Encoding>)*
 
@@ -109,3 +111,45 @@ impl AcceptEncoding {
 //     // Note: Removed quality 1 from gzip
 //     test_header!(test5, vec![b"gzip, identity; q=0.5, *;q=0"]);
 // }
+
+#[cfg(test)]
+mod tests {
+    use super::{super::test_decode, *};
+    use std::convert::TryInto;
+
+    #[test]
+    fn iter() {
+        let allowed = test_decode::<AcceptEncoding>(&["compress, gzip"]).unwrap();
+
+        let as_vec = allowed.iter().collect::<Vec<_>>();
+        assert_eq!(
+            as_vec,
+            vec![
+                QualityValue::new(Encoding::Compress, 1.0.try_into().unwrap()),
+                QualityValue::new(Encoding::Gzip, 1.0.try_into().unwrap())
+            ]
+        );
+    }
+
+    #[test]
+    fn star() {
+        let allowed = test_decode::<AcceptEncoding>(&["*"]).unwrap();
+
+        let as_vec = dbg!(allowed.iter().collect::<Vec<_>>());
+        assert_eq!(
+            as_vec,
+            vec![
+                QualityValue::new(Encoding::Compress, 1.0.try_into().unwrap()),
+                QualityValue::new(Encoding::Gzip, 1.0.try_into().unwrap())
+            ]
+        );
+    }
+
+    // #[test]
+    // fn from_iter() {
+    //     let allow: AccessControlAllowMethods = vec![Method::GET, Method::PUT].into_iter().collect();
+
+    //     let headers = test_encode(allow);
+    //     assert_eq!(headers["access-control-allow-methods"], "GET, PUT");
+    // }
+}

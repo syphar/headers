@@ -1,12 +1,10 @@
 #[allow(unused, deprecated)]
 use std::ascii::AsciiExt;
 use std::cmp;
+use std::convert::{TryFrom, TryInto};
 use std::default::Default;
 use std::fmt;
 use std::str;
-
-#[cfg(test)]
-use self::internal::IntoQuality;
 
 /// Represents a quality used in quality values.
 ///
@@ -36,7 +34,7 @@ impl Default for Quality {
 #[derive(Clone, PartialEq, Debug)]
 pub struct QualityValue<T> {
     /// The actual contents of the field.
-    value: T,
+    pub value: T,
     /// The quality (client or server preference) for the value.
     quality: Quality,
 }
@@ -139,44 +137,36 @@ fn from_f32(f: f32) -> Quality {
 }
 
 #[cfg(test)]
-fn q<T: IntoQuality>(val: T) -> Quality {
-    val.into_quality()
+fn q<T>(val: T) -> Quality
+where
+    T: TryInto<Quality>,
+    <T as TryInto<Quality>>::Error: fmt::Debug,
+{
+    val.try_into().expect("can't convert into quality")
 }
 
-mod internal {
-    use super::Quality;
+impl TryFrom<f32> for Quality {
+    type Error = crate::Error;
 
-    // TryFrom is probably better, but it's not stable. For now, we want to
-    // keep the functionality of the `q` function, while allowing it to be
-    // generic over `f32` and `u16`.
-    //
-    // `q` would panic before, so keep that behavior. `TryFrom` can be
-    // introduced later for a non-panicking conversion.
-
-    pub trait IntoQuality: Sealed + Sized {
-        fn into_quality(self) -> Quality;
-    }
-
-    impl IntoQuality for f32 {
-        fn into_quality(self) -> Quality {
-            assert!(
-                (0f32..=1f32).contains(&self),
-                "float must be between 0.0 and 1.0"
-            );
-            super::from_f32(self)
+    fn try_from(value: f32) -> Result<Self, Self::Error> {
+        if (0f32..=1f32).contains(&value) {
+            Ok(from_f32(value))
+        } else {
+            Err(crate::Error::invalid())
         }
     }
+}
 
-    impl IntoQuality for u16 {
-        fn into_quality(self) -> Quality {
-            assert!(self <= 1000, "u16 must be between 0 and 1000");
-            Quality(self)
+impl TryFrom<u16> for Quality {
+    type Error = crate::Error;
+
+    fn try_from(value: u16) -> Result<Self, Self::Error> {
+        if value <= 1000 {
+            Ok(Quality(value))
+        } else {
+            Err(crate::Error::invalid())
         }
     }
-
-    pub trait Sealed {}
-    impl Sealed for u16 {}
-    impl Sealed for f32 {}
 }
 
 #[cfg(test)]
