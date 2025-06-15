@@ -70,8 +70,8 @@ derive_header! {
 impl AcceptEncoding {
     /// Returns an iterator over `QualityValue<Encoding>`s contained within, ordered by priority.
     pub fn iter(&self) -> impl Iterator<Item = QualityValue<Encoding>> + '_ {
-        let mut values: Vec<_> = self.0.iter().filter_map(|s| s.parse().ok()).collect();
-        values.sort();
+        let values: Vec<_> = self.0.iter().filter_map(|s| s.parse().ok()).collect();
+        // values.sort();
         values.into_iter()
     }
 
