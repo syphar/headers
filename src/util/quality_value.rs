@@ -31,7 +31,7 @@ impl Default for Quality {
 
 /// Represents an item with a quality value as defined in
 /// [RFC7231](https://tools.ietf.org/html/rfc7231#section-5.3.1).
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub struct QualityValue<T> {
     /// The actual contents of the field.
     pub value: T,
@@ -45,7 +45,6 @@ impl<T> QualityValue<T> {
         QualityValue { value, quality }
     }
 
-    /*
     /// Convenience function to set a `Quality` from a float or integer.
     ///
     /// Implemented for `u16` and `f32`.
@@ -53,11 +52,14 @@ impl<T> QualityValue<T> {
     /// # Panic
     ///
     /// Panics if value is out of range.
-    pub fn with_q<Q: IntoQuality>(mut self, q: Q) -> QualityValue<T> {
-        self.quality = q.into_quality();
+    pub fn with_q<Q>(mut self, q: Q) -> QualityValue<T>
+    where
+        Q: TryInto<Quality>,
+        <Q as TryInto<Quality>>::Error: fmt::Debug,
+    {
+        self.quality = q.try_into().expect("couldn't convert value into quality");
         self
     }
-    */
 }
 
 impl<T> From<T> for QualityValue<T> {
@@ -69,9 +71,21 @@ impl<T> From<T> for QualityValue<T> {
     }
 }
 
-impl<T: PartialEq> cmp::PartialOrd for QualityValue<T> {
+impl<T: PartialOrd> cmp::PartialOrd for QualityValue<T> {
     fn partial_cmp(&self, other: &QualityValue<T>) -> Option<cmp::Ordering> {
-        self.quality.partial_cmp(&other.quality)
+        match self.quality.partial_cmp(&other.quality) {
+            Some(cmp::Ordering::Equal) => self.value.partial_cmp(&other.value),
+            non_eq => non_eq,
+        }
+    }
+}
+
+impl<T: Ord> cmp::Ord for QualityValue<T> {
+    fn cmp(&self, other: &QualityValue<T>) -> cmp::Ordering {
+        match self.quality.cmp(&other.quality) {
+            cmp::Ordering::Equal => self.value.cmp(&other.value),
+            non_eq => non_eq,
+        }
     }
 }
 

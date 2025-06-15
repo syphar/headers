@@ -70,13 +70,19 @@ derive_header! {
 impl AcceptEncoding {
     /// Returns an iterator over `QualityValue<Encoding>`s contained within, ordered by priority.
     pub fn iter(&self) -> impl Iterator<Item = QualityValue<Encoding>> + '_ {
-        // FIXME: sort by priority / quality
-        self.0.iter().filter_map(|s| s.parse().ok())
+        let mut values: Vec<_> = self.0.iter().filter_map(|s| s.parse().ok()).collect();
+        values.sort();
+        values.into_iter()
     }
 
     /// Returns an iterator just over `Encoding`s contained within, ordered by priority.
     pub fn iter_encodings(&self) -> impl Iterator<Item = Encoding> + '_ {
         self.iter().map(|qv: QualityValue<Encoding>| qv.value)
+    }
+
+    /// returns if a certain encoding is accepted.
+    pub fn accepts(&self, encoding: &Encoding) -> bool {
+        self.iter_encodings().any(|e| &e == encoding)
     }
 }
 
@@ -138,10 +144,7 @@ mod tests {
         let as_vec = dbg!(allowed.iter().collect::<Vec<_>>());
         assert_eq!(
             as_vec,
-            vec![
-                QualityValue::new(Encoding::Compress, 1.0.try_into().unwrap()),
-                QualityValue::new(Encoding::Gzip, 1.0.try_into().unwrap())
-            ]
+            vec![QualityValue::new(Encoding::Star, 1.0.try_into().unwrap()),]
         );
     }
 

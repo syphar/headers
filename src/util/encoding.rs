@@ -1,12 +1,14 @@
 use std::fmt;
 use std::str;
 
-pub use self::Encoding::{Brotli, Chunked, Compress, Deflate, Ext, Gzip, Identity, Trailers};
+pub use self::Encoding::{Brotli, Chunked, Compress, Deflate, Ext, Gzip, Identity, Star, Trailers};
 
 /// A value to represent an encoding used in `Transfer-Encoding`
 /// or `Accept-Encoding` header.
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub enum Encoding {
+    /// The `*` (= all) encoding.
+    Star,
     /// The `chunked` encoding.
     Chunked,
     /// The `br` encoding.
@@ -29,6 +31,7 @@ impl fmt::Display for Encoding {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.write_str(match *self {
             Chunked => "chunked",
+            Star => "*",
             Brotli => "br",
             Gzip => "gzip",
             Deflate => "deflate",
@@ -44,6 +47,7 @@ impl str::FromStr for Encoding {
     type Err = crate::Error;
     fn from_str(s: &str) -> Result<Encoding, crate::Error> {
         match s {
+            "*" => Ok(Star),
             "chunked" => Ok(Chunked),
             "br" => Ok(Brotli),
             "deflate" => Ok(Deflate),
