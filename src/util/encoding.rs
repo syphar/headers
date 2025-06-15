@@ -5,7 +5,7 @@ pub use self::Encoding::{Brotli, Chunked, Compress, Deflate, Ext, Gzip, Identity
 
 /// A value to represent an encoding used in `Transfer-Encoding`
 /// or `Accept-Encoding` header.
-#[derive(Clone, PartialEq, PartialOrd, Debug)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum Encoding {
     /// The `*` (= all) encoding.
     Star,

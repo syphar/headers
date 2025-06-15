@@ -31,7 +31,7 @@ impl Default for Quality {
 
 /// Represents an item with a quality value as defined in
 /// [RFC7231](https://tools.ietf.org/html/rfc7231#section-5.3.1).
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, Debug)]
 pub struct QualityValue<T> {
     /// The actual contents of the field.
     pub value: T,
@@ -71,9 +71,15 @@ impl<T> From<T> for QualityValue<T> {
     }
 }
 
-impl<T: PartialOrd> cmp::PartialOrd for QualityValue<T> {
+impl<T> cmp::PartialOrd for QualityValue<T> {
     fn partial_cmp(&self, other: &QualityValue<T>) -> Option<cmp::Ordering> {
         self.quality.partial_cmp(&other.quality)
+    }
+}
+
+impl<T> cmp::PartialEq for QualityValue<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.quality == other.quality
     }
 }
 
