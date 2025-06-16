@@ -1,10 +1,11 @@
 #[allow(unused, deprecated)]
-use std::ascii::AsciiExt;
-use std::cmp;
-use std::convert::{TryFrom, TryInto};
-use std::default::Default;
-use std::fmt;
-use std::str;
+use std::{
+    ascii::AsciiExt,
+    cmp,
+    convert::{TryFrom, TryInto},
+    default::Default,
+    fmt, str,
+};
 
 /// Represents a quality used in quality values.
 ///

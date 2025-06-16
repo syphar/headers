@@ -1,6 +1,4 @@
-use std::borrow::Cow;
-use std::fmt;
-use std::str;
+use std::{borrow::Cow, fmt, str};
 
 pub use self::Encoding::{Brotli, Chunked, Compress, Deflate, Ext, Gzip, Identity, Trailers};
 

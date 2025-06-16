@@ -1,8 +1,6 @@
-use std::{borrow::Cow, cmp::Ordering, iter::FromIterator};
-
-use http::HeaderValue;
-
 use crate::util::{Encoding, FlatCsv, QualityValue};
+use http::HeaderValue;
+use std::{borrow::Cow, cmp::Ordering, iter::FromIterator};
 
 const STAR: Encoding = Encoding::Ext(Cow::Borrowed("*"));
 
